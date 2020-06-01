@@ -17,7 +17,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: create environment
-        run: 'source $CONDA/bin/activate && conda env create -n citycatpg -f environment.yml'
+        run: |
+          |
+          source $CONDA/bin/activate && conda env create -n citycatpg -f environment.yml &&
+          source $CONDA/bin/activate citycatpg && cd citycatio && python setup.py install
 
       - name: run tests
-        run: 'source $CONDA/bin/activate citycatpg && python -m unittest'
+        run: source $CONDA/bin/activate citycatpg && python -m unittest
