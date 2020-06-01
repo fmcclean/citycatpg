@@ -3,7 +3,7 @@ import rasterio as rio
 import pandas as pd
 
 
-def read_postgis(con, domain_table='domain', domain_id=1, rainfall_table='rainfall', dem_table='dem'):
+def read_postgis(con, domain_table: str = 'domain', domain_id: int = 1, dem_table: str = 'dem'):
     with con.cursor() as cursor:
         cursor.execute("""
         SELECT ST_AsGDALRaster(ST_Union(ST_Clip(rast, geom)), 'GTiff') 
