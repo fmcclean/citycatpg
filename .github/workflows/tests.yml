@@ -1,0 +1,16 @@
+name: tests
+on: [push]
+
+
+jobs:
+  conda:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: create environment
+        run: '$CONDA/bin/activate & conda env create -n citycatpg -f environment.yml'
+
+      - name: run tests
+        run: '$CONDA/bin/activate citycatpg & python -m unittest'
