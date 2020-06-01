@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+
+dependencies:
+  - geopandas
+  - rasterio
+  - netCDF4
+  - psycopg2
+  - sqlalchemy
