@@ -5,12 +5,19 @@ on: [push]
 jobs:
   conda:
     runs-on: ubuntu-latest
+    services:
+      postgis:
+        image: postgis/postgis
+        ports:
+          - localhost:5432:5432
+        env:
+          POSTGRES_PASSWORD: password
     steps:
       - name: checkout
         uses: actions/checkout@v2
 
       - name: create environment
-        run: '$CONDA/bin/activate & conda env create -n citycatpg -f environment.yml'
+        run: '$CONDA/bin/activate && conda env create -n citycatpg -f environment.yml'
 
       - name: run tests
-        run: '$CONDA/bin/activate citycatpg & python -m unittest'
+        run: '$CONDA/bin/activate citycatpg && python -m unittest'
