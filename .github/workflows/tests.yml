@@ -9,7 +9,7 @@ jobs:
       postgis:
         image: postgis/postgis
         ports:
-          - localhost:5432:5432
+          - 5432:5432
         env:
           POSTGRES_PASSWORD: password
     steps:
