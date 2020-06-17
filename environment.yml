@@ -7,3 +7,5 @@ dependencies:
   - netCDF4
   - psycopg2
   - sqlalchemy
+  - pip:
+      - citycatio==0.1.0
