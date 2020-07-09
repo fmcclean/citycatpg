@@ -7,7 +7,7 @@ class TestRun(TestCase):
     def test_add_run(self):
         con = psycopg2.connect(database='postgres', user='postgres', password='password', host='localhost')
 
-        run.add_run(con, run_duration=500, srid=3035, resolution=90)
+        run.Run(run_duration=500, srid=3035, resolution=90).add(con)
 
         with con.cursor() as cur:
             cur.execute('DROP TABLE runs')

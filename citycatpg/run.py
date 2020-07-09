@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from datetime import datetime
 from psycopg2.extensions import connection
@@ -8,11 +8,11 @@ from psycopg2 import sql
 
 @dataclass
 class Run:
-    run_id: str
     run_duration: int
     srid: int
     resolution: int
 
+    run_id: Optional[str] = field(default_factory=lambda: str(uuid.uuid1()))
     run_table: str = 'runs'
     run_name: str = ''
     run_start: Optional[datetime] = None
@@ -37,70 +37,67 @@ class Run:
     hostname: Optional[str] = None
     version_number: Optional[str] = None
 
+    def add(self, con: connection):
 
-def add_run(con: connection, **kwargs):
-
-    run = Run(run_id=str(uuid.uuid1()), **kwargs)
-
-    query = sql.SQL("""
-    CREATE TABLE IF NOT EXISTS {run_table} (
-        run_id text,
-        run_duration int, 
-        srid int, 
-        resolution int, 
-        run_name text, 
-        domain_table text,
-        rain_table text,
-        rain_start timestamp,
-        rain_end timestamp,
-        rain_total numeric,
-        rain_duration int,
-        friction numeric,
-        green_areas_table text,
-        buildings_table text,
-        upload_url text,
-        hostname text,
-        version_number text
-    );
-    
-    INSERT INTO {run_table} (
-        run_id,
-        run_duration, 
-        srid, 
-        resolution, 
-        run_name, 
-        domain_table,
-        rain_table,
-        rain_start,
-        rain_end,
-        rain_total,
-        rain_duration,
-        friction,
-        green_areas_table,
-        buildings_table,
-        upload_url,
-        hostname,
-        version_number
-    ) 
-    VALUES (
-        %(run_id)s,
-        %(run_duration)s, 
-        %(srid)s, 
-        %(resolution)s, 
-        %(run_table)s, 
-        %(run_name)s, 
-        %(domain_table)s,
-        %(rain_start)s,
-        %(rain_end)s,
-        %(rain_total)s,
-        %(rain_duration)s,
-        %(friction)s,
-        %(green_areas_table)s,
-        %(buildings_table)s,
-        %(upload_url)s,
-        %(hostname)s,
-        %(version_number)s
-    )
-    """).format(run_table=sql.Identifier(run.run_table))
-    with con.cursor() as cur:
-        cur.execute(query, run.__dict__)
+        query = sql.SQL("""
+        CREATE TABLE IF NOT EXISTS {run_table} (
+            run_id text,
+            run_duration int, 
+            srid int, 
+            resolution int, 
+            run_name text, 
+            domain_table text,
+            rain_table text,
+            rain_start timestamp,
+            rain_end timestamp,
+            rain_total numeric,
+            rain_duration int,
+            friction numeric,
+            green_areas_table text,
+            buildings_table text,
+            upload_url text,
+            hostname text,
+            version_number text
+        );
+        
+        INSERT INTO {run_table} (
+            run_id,
+            run_duration, 
+            srid, 
+            resolution, 
+            run_name, 
+            domain_table,
+            rain_table,
+            rain_start,
+            rain_end,
+            rain_total,
+            rain_duration,
+            friction,
+            green_areas_table,
+            buildings_table,
+            upload_url,
+            hostname,
+            version_number
+        ) 
+        VALUES (
+            %(run_id)s,
+            %(run_duration)s, 
+            %(srid)s, 
+            %(resolution)s, 
+            %(run_table)s, 
+            %(run_name)s, 
+            %(domain_table)s,
+            %(rain_start)s,
+            %(rain_end)s,
+            %(rain_total)s,
+            %(rain_duration)s,
+            %(friction)s,
+            %(green_areas_table)s,
+            %(buildings_table)s,
+            %(upload_url)s,
+            %(hostname)s,
+            %(version_number)s
+        )
+        """).format(run_table=sql.Identifier(self.run_table))
+        with con.cursor() as cur:
+            cur.execute(query, self.__dict__)
