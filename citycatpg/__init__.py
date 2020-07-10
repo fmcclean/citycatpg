@@ -1,1 +1,1 @@
-from .main import read_postgis
+from .run import Run, fetch
