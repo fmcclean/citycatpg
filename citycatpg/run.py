@@ -101,3 +101,70 @@ class Run:
         """).format(run_table=sql.Identifier(self.run_table))
         with con.cursor() as cur:
             cur.execute(query, self.__dict__)
+
+
+def fetch(con, run_id, run_table='runs'):
+    query = sql.SQL("""
+    SELECT 
+        run_id,
+        run_duration, 
+        srid, 
+        resolution, 
+        run_name, 
+        domain_table,
+        rain_table,
+        rain_start,
+        rain_end,
+        rain_total,
+        rain_duration,
+        friction,
+        green_areas_table,
+        buildings_table,
+        upload_url,
+        hostname,
+        version_number
+    
+    FROM {run_table}
+    WHERE run_id = %(run_id)s
+    """).format(run_table=sql.Identifier(run_table))
+    with con.cursor() as cur:
+        cur.execute(query, dict(run_id=run_id))
+        (
+            run_id,
+            run_duration,
+            srid,
+            resolution,
+            run_name,
+            domain_table,
+            rain_table,
+            rain_start,
+            rain_end,
+            rain_total,
+            rain_duration,
+            friction,
+            green_areas_table,
+            buildings_table,
+            upload_url,
+            hostname,
+            version_number
+        ) = cur.fetchone()
+
+    return Run(
+        run_id=run_id,
+        run_duration=run_duration,
+        srid=srid,
+        resolution=resolution,
+        run_name=run_name,
+        domain_table=domain_table,
+        rain_table=rain_table,
+        rain_start=rain_start,
+        rain_end=rain_end,
+        rain_total=rain_total,
+        rain_duration=rain_duration,
+        friction=friction,
+        green_areas_table=green_areas_table,
+        buildings_table=buildings_table,
+        upload_url=upload_url,
+        hostname=hostname,
+        version_number=version_number
+    )
