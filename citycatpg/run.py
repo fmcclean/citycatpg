@@ -92,9 +92,9 @@ class Run:
             %(run_duration)s, 
             %(srid)s, 
             %(resolution)s, 
-            %(run_table)s, 
             %(run_name)s, 
             %(domain_table)s,
+            %(rain_table)s,
             %(rain_start)s,
             %(rain_end)s,
             %(output_frequency)s,
@@ -108,20 +108,22 @@ class Run:
             %(version_number)s
         )
         """).format(run_table=sql.Identifier(self.run_table))
-        with con.cursor() as cur:
-            cur.execute(query, self.__dict__)
+        with con:
+            with con.cursor() as cur:
+                cur.execute(query, self.__dict__)
 
     def get_model(self, con):
-        with con.cursor() as cursor:
-            cursor.execute(sql.SQL("""
-            SELECT ST_AsGDALRaster(ST_Union(ST_Clip(rast, geom)), 'GTiff') 
-            FROM {dem_table}, {domain_table} WHERE ST_Intersects(rast, geom) and gid=%(domain_id)s
-            """).format(
-                dem_table=sql.Identifier(self.dem_table),
-                domain_table=sql.Identifier(self.domain_table),
-            ), self.__dict__)
+        with con:
+            with con.cursor() as cursor:
+                cursor.execute(sql.SQL("""
+                SELECT ST_AsGDALRaster(ST_Union(ST_Clip(rast, geom)), 'GTiff') 
+                FROM {dem_table}, {domain_table} WHERE ST_Intersects(rast, geom) and gid=%(domain_id)s
+                """).format(
+                    dem_table=sql.Identifier(self.dem_table),
+                    domain_table=sql.Identifier(self.domain_table),
+                ), self.__dict__)
 
-            dem = rio.MemoryFile(cursor.fetchone()[0].tobytes())
+                dem = rio.MemoryFile(cursor.fetchone()[0].tobytes())
 
         self.model = Model(
             dem=dem,
@@ -156,28 +158,29 @@ def fetch(con, run_id, run_table='runs'):
     FROM {run_table}
     WHERE run_id = %(run_id)s
     """).format(run_table=sql.Identifier(run_table))
-    with con.cursor() as cur:
-        cur.execute(query, dict(run_id=run_id))
-        (
-            run_id,
-            run_duration,
-            srid,
-            resolution,
-            run_name,
-            domain_table,
-            rain_table,
-            rain_start,
-            rain_end,
-            output_frequency,
-            rain_total,
-            rain_duration,
-            friction,
-            green_areas_table,
-            buildings_table,
-            upload_url,
-            hostname,
-            version_number
-        ) = cur.fetchone()
+    with con:
+        with con.cursor() as cur:
+            cur.execute(query, dict(run_id=run_id))
+            (
+                run_id,
+                run_duration,
+                srid,
+                resolution,
+                run_name,
+                domain_table,
+                rain_table,
+                rain_start,
+                rain_end,
+                output_frequency,
+                rain_total,
+                rain_duration,
+                friction,
+                green_areas_table,
+                buildings_table,
+                upload_url,
+                hostname,
+                version_number
+            ) = cur.fetchone()
 
     return Run(
         run_id=run_id,
