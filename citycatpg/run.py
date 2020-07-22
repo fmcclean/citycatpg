@@ -113,6 +113,16 @@ class Run:
                 cur.execute(query, self.__dict__)
 
     def get_model(self, con):
+
+        self.model = Model(
+            dem=self.get_dem(con),
+            rainfall=pd.DataFrame([0]),
+            duration=self.run_duration,
+            output_interval=self.output_frequency
+        )
+
+    def get_dem(self, con):
+
         with con:
             with con.cursor() as cursor:
                 cursor.execute(sql.SQL("""
@@ -123,14 +133,7 @@ class Run:
                     domain_table=sql.Identifier(self.domain_table),
                 ), self.__dict__)
 
-                dem = rio.MemoryFile(cursor.fetchone()[0].tobytes())
-
-        self.model = Model(
-            dem=dem,
-            rainfall=pd.DataFrame([0]),
-            duration=self.run_duration,
-            output_interval=self.output_frequency
-        )
+                return rio.MemoryFile(cursor.fetchone()[0].tobytes())
 
 
 def fetch(con, run_id, run_table='runs'):
