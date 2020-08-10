@@ -116,7 +116,7 @@ class Run:
 
         self.model = Model(
             dem=self.get_dem(con),
-            rainfall=pd.DataFrame([0]),
+            rainfall=self.get_rainfall(con),
             duration=self.run_duration,
             output_interval=self.output_frequency
         )
@@ -134,6 +134,23 @@ class Run:
                 ), self.__dict__)
 
                 return rio.MemoryFile(cursor.fetchone()[0].tobytes())
+
+    def get_rainfall(self, con):
+
+        if self.rain_total:
+
+            rain = pd.DataFrame({
+                'rainfall': [self.rain_total] * 2
+            },
+                index=[0, self.rain_duration])
+
+            rain /= 1000  # convert from mm to m
+
+        else:
+            # not implemented
+            rain = pd.DataFrame([0])
+
+        return rain
 
 
 def fetch(con, run_id, run_table='runs'):

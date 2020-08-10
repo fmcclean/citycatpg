@@ -48,7 +48,7 @@ class TestRun(TestCase):
 
     def test_get_model(self):
         dem_file.seek(0)
-        r = Run(100, 3035, 90)
+        r = Run(100, 3035, 90, rain_total=100, rain_duration=500)
         with con:
             with con.cursor() as cursor:
                 cursor.execute("CREATE EXTENSION IF NOT EXISTS postgis_raster")

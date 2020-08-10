@@ -8,4 +8,4 @@ dependencies:
   - psycopg2=2.8.5
   - sqlalchemy=1.3.17
   - pip:
-      - citycatio==0.2.0
+      - citycatio==0.2.1
