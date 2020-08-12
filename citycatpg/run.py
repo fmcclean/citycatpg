@@ -7,6 +7,7 @@ from psycopg2 import sql
 from citycatio import Model
 import pandas as pd
 import rasterio as rio
+import geopandas as gpd
 
 
 @dataclass
@@ -42,6 +43,11 @@ class Run:
     version_number: Optional[str] = None
 
     model: Optional[Model] = None
+
+    @property
+    def rain_geom_table(self):
+        if self.rain_table is not None:
+            return self.rain_table + '_geom'
 
     def add(self, con: connection):
 
@@ -117,6 +123,7 @@ class Run:
         self.model = Model(
             dem=self.get_dem(con),
             rainfall=self.get_rainfall(con),
+            rainfall_polygons=self.get_rainfall_polygons(con),
             duration=self.run_duration,
             output_interval=self.output_frequency
         )
@@ -151,6 +158,22 @@ class Run:
             rain = pd.DataFrame([0])
 
         return rain
+
+    def get_rainfall_polygons(self, con):
+        if self.rain_total:
+            return
+
+        else:
+            return gpd.GeoDataFrame.from_postgis(
+                sql.SQL(
+                """
+                SELECT {rain_geom_table}.gid, {rain_geom_table}.geom FROM {rain_geom_table}, {domain_table} 
+                WHERE ST_Intersects({rain_geom_table}.geom, {domain_table}.geom)
+                """).format(
+                    rain_geom_table=sql.Identifier(self.rain_geom_table),
+                    domain_table=sql.Identifier(self.domain_table)
+                ).as_string(con),
+                con)
 
 
 def fetch(con, run_id, run_table='runs'):
