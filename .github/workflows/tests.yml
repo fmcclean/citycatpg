@@ -18,11 +18,22 @@ jobs:
         with:
           submodules: true
 
-      - name: create environment
-        run: |
-          source $CONDA/bin/activate
-          conda env create -n citycatpg -f environment.yml
-          source $CONDA/bin/activate citycatpg
+      - name: Cache conda
+        uses: actions/cache@v1
+        env:
+          # Increase this value to reset cache if environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+
+      - name: Set up conda
+          uses: goanpeca/setup-miniconda@v1
+          with:
+            python-version: 3.8
+            activate-environment: citycatpg
+            environment-file: environment.yml
 
       - name: run tests
-        run: source $CONDA/bin/activate citycatpg && python -m unittest
+        shell: bash -l {0}
+        run: python -m unittest
