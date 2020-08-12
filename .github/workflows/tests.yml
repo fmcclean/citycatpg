@@ -28,11 +28,11 @@ jobs:
           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
 
       - name: Set up conda
-          uses: goanpeca/setup-miniconda@v1
-          with:
-            python-version: 3.8
-            activate-environment: citycatpg
-            environment-file: environment.yml
+        uses: goanpeca/setup-miniconda@v1
+        with:
+          python-version: 3.8
+          activate-environment: citycatpg
+          environment-file: environment.yml
 
       - name: run tests
         shell: bash -l {0}
