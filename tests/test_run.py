@@ -6,6 +6,7 @@ from rasterio.transform import Affine
 import numpy as np
 import psycopg2
 from psycopg2 import sql
+import datetime
 
 con = psycopg2.connect(database='postgres', user='postgres', password='password', host='localhost')
 
@@ -51,6 +52,10 @@ class TestRun(TestCase):
                         DROP TABLE IF EXISTS {rain_geom_table};
                         CREATE TABLE {rain_geom_table} (gid serial PRIMARY KEY, geom geometry);
                         INSERT INTO {rain_geom_table} (geom) VALUES (ST_GeomFromText(%(geom)s));
+                        
+                        DROP TABLE IF EXISTS {rain_table};
+                        CREATE TABLE {rain_table} (gid integer, time timestamp, value numeric);
+                        INSERT INTO {rain_table} (gid, time, value) VALUES (1, '2000-01-01', 10),(1, '2000-01-02', 20);
 
                         DROP TABLE IF EXISTS {dem_table};
                         CREATE TABLE {dem_table} (rast raster);
@@ -58,7 +63,8 @@ class TestRun(TestCase):
                     """).format(
                         domain_table=sql.Identifier(r.domain_table),
                         dem_table=sql.Identifier(r.dem_table),
-                        rain_geom_table=sql.Identifier(r.rain_geom_table)
+                        rain_geom_table=sql.Identifier(r.rain_geom_table),
+                        rain_table=sql.Identifier(r.rain_table),
                     ),
                     dict(
                         geom=str(Polygon(
@@ -88,7 +94,9 @@ class TestRun(TestCase):
         r.model.write('tests/test_model_generated')
 
     def test_get_model(self):
-        r = Run(100, 3035, 90, rain_table='rain')
+        r = Run(100, 3035, 90, rain_table='rain',
+                rain_start=datetime.datetime(2000, 1, 1),
+                rain_end=datetime.datetime(2000, 1, 2))
 
         r.get_model(con)
         r.model.write('tests/test_model')

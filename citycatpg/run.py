@@ -120,10 +120,16 @@ class Run:
 
     def get_model(self, con):
 
+        rainfall_polygons = self.get_rainfall_polygons(con)
+        if rainfall_polygons is not None:
+            gids = rainfall_polygons.gid.unique().tolist()
+        else:
+            gids = None
+
         self.model = Model(
             dem=self.get_dem(con),
-            rainfall=self.get_rainfall(con),
-            rainfall_polygons=self.get_rainfall_polygons(con),
+            rainfall=self.get_rainfall(con, gids),
+            rainfall_polygons=rainfall_polygons,
             duration=self.run_duration,
             output_interval=self.output_frequency
         )
@@ -142,9 +148,9 @@ class Run:
 
                 return rio.MemoryFile(cursor.fetchone()[0].tobytes())
 
-    def get_rainfall(self, con):
+    def get_rainfall(self, con, gids=None):
 
-        if self.rain_total:
+        if gids is None:
 
             rain = pd.DataFrame({
                 'rainfall': [self.rain_total] * 2
@@ -154,8 +160,21 @@ class Run:
             rain /= 1000  # convert from mm to m
 
         else:
-            # not implemented
-            rain = pd.DataFrame([0])
+            assert self.rain_start and self.rain_end
+
+            rain = pd.read_sql_query(sql.SQL("""
+            SELECT gid, value, time
+            FROM {rain_table} WHERE gid = ANY({gids}) 
+            AND time >= {rain_start} AND time <= {rain_end}
+            """).format(
+                rain_table=sql.Identifier(self.rain_table),
+                gids=sql.Literal(gids),
+                rain_start=sql.Literal(self.rain_start),
+                rain_end=sql.Literal(self.rain_end),
+            ), con)
+            rain = rain.pivot(index='time', values='value', columns='gid')
+
+            rain.index = (rain.index - rain.index[0]).total_seconds().astype(int)
 
         return rain
 
