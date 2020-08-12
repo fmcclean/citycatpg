@@ -1,3 +1,5 @@
+name: citycatpg
+
 channels:
   - conda-forge
 

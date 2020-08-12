@@ -33,6 +33,7 @@ jobs:
             python-version: 3.8
             activate-environment: citycatpg
             environment-file: environment.yml
+            use-only-tar-bz2: true
 
       - name: run tests
         shell: bash -l {0}
