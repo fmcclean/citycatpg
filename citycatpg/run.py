@@ -153,9 +153,9 @@ class Run:
         if gids is None:
 
             rain = pd.DataFrame({
-                'rainfall': [self.rain_total] * 2
+                'rainfall': [self.rain_total / self.rain_duration] * 2 + [0]
             },
-                index=[0, self.rain_duration])
+                index=[0, self.rain_duration, self.rain_duration + 1])
 
             rain /= 1000  # convert from mm to m
 
