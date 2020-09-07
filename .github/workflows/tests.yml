@@ -12,6 +12,8 @@ jobs:
           - 5432:5432
         env:
           POSTGRES_PASSWORD: password
+      rabbit:
+        image: rabbitmq
     steps:
       - name: checkout
         uses: actions/checkout@v2
