@@ -120,6 +120,8 @@ class Run:
 
     def get_model(self, con):
 
+        assert self.rain_table is not None or self.rain_total is not None
+
         rainfall_polygons = self.get_rainfall_polygons(con)
         if rainfall_polygons is not None:
             gids = rainfall_polygons.gid.unique().tolist()

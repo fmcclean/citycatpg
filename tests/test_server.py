@@ -1,6 +1,7 @@
 from citycatpg import server
 from unittest import TestCase
 import pika
+from .test_run import TestRun, con
 
 
 class TestServer(TestCase):
@@ -10,7 +11,11 @@ class TestServer(TestCase):
         connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', port=5672))
         channel = connection.channel()
         channel.queue_declare(queue=queue)
+
+        test_run = TestRun()
+        run = test_run.test_add_run()
+
         channel.basic_publish(exchange='',
                               routing_key=queue,
-                              body='Hello World!')
-        server.run_server(queue)
+                              body=run.run_id)
+        server.run_server(queue=queue, con=con)
