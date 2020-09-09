@@ -75,7 +75,7 @@ class TestRun(TestCase):
         with con:
             with con.cursor() as cur:
                 cur.execute('DROP TABLE IF EXISTS runs')
-        run = Run(run_duration=500, srid=3035, resolution=90, rain_total=100, rain_duration=200)
+        run = Run(run_duration=500, srid=3035, resolution=90, rain_total=100, rain_duration=200, run_name='test')
         run.add(con)
         return run
 

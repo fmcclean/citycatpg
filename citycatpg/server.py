@@ -2,13 +2,15 @@ import pika
 from .run import fetch
 
 
-def run_server(con, queue='runs', host='localhost', port=5672):
+def run_server(con, run_path, out_path, queue='runs', host='localhost', port=5672, close=False):
     def callback(ch, method, properties, body):
 
         run = fetch(con, body.decode('utf8'))
         run.get_model(con)
-        run.model.write('tests/test_model_from_queue')
-        if queue == 'test':
+
+        run.execute(run_path, out_path)
+
+        if close:
             ch.close()
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, port=port))
