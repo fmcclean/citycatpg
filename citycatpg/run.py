@@ -1,13 +1,17 @@
+import shutil
 from dataclasses import dataclass, field
 from typing import Optional
 from datetime import datetime
 from psycopg2.extensions import connection
 import uuid
 from psycopg2 import sql
-from citycatio import Model
+from citycatio import Model, output
 import pandas as pd
 import rasterio as rio
 import geopandas as gpd
+import os
+import subprocess
+import warnings
 
 
 @dataclass
@@ -16,7 +20,7 @@ class Run:
     srid: int
     resolution: int
 
-    run_id: Optional[str] = field(default_factory=lambda: str(uuid.uuid1()))
+    run_id: Optional[str] = field(default_factory=lambda: str(uuid.uuid4()))
     run_table: str = 'runs'
     run_name: str = ''
     run_start: Optional[datetime] = None
@@ -120,6 +124,8 @@ class Run:
 
     def get_model(self, con):
 
+        assert self.rain_table is not None or self.rain_total is not None
+
         rainfall_polygons = self.get_rainfall_polygons(con)
         if rainfall_polygons is not None:
             gids = rainfall_polygons.gid.unique().tolist()
@@ -193,6 +199,19 @@ class Run:
                     domain_table=sql.Identifier(self.domain_table)
                 ).as_string(con),
                 con)
+
+    def execute(self, run_path, out_path):
+
+        self.model.write(run_path)
+
+        executable = os.getenv('CITYCAT')
+        if executable is None:
+            warnings.warn('CITYCAT environment variable missing')
+            return
+        shutil.copy(executable, run_path)
+        subprocess.call(f'cd {run_path} & citycat.exe -r 1 -c 1', shell=True)
+        output.Output(os.path.join(run_path, 'R1C1_SurfaceMaps')).to_netcdf(
+            os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'))
 
 
 def fetch(con, run_id, run_table='runs'):
