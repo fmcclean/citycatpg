@@ -191,13 +191,13 @@ class Run:
         else:
             return gpd.GeoDataFrame.from_postgis(
                 sql.SQL(
-                """
-                SELECT {rain_geom_table}.gid, {rain_geom_table}.geom FROM {rain_geom_table}, {domain_table} 
-                WHERE ST_Intersects({rain_geom_table}.geom, {domain_table}.geom)
-                """).format(
-                    rain_geom_table=sql.Identifier(self.rain_geom_table),
-                    domain_table=sql.Identifier(self.domain_table)
-                ).as_string(con),
+                    """
+                    SELECT {rain_geom_table}.gid, {rain_geom_table}.geom FROM {rain_geom_table}, {domain_table} 
+                    WHERE ST_Intersects({rain_geom_table}.geom, {domain_table}.geom)
+                    """).format(
+                        rain_geom_table=sql.Identifier(self.rain_geom_table),
+                        domain_table=sql.Identifier(self.domain_table)
+                    ).as_string(con),
                 con)
 
     def execute(self, run_path, out_path):

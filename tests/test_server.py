@@ -1,8 +1,9 @@
 from citycatpg import server
+from citycatpg.run import Run
 from unittest import TestCase
 import pika
-from .test_run import TestRun, con
 import os
+from .setup_tests import con
 
 
 class TestServer(TestCase):
@@ -13,8 +14,9 @@ class TestServer(TestCase):
         channel = connection.channel()
         channel.queue_declare(queue=queue)
 
-        test_run = TestRun()
-        run = test_run.test_add_run()
+        run = Run(run_duration=120, srid=3035, resolution=90, rain_total=100, rain_duration=120, run_name='test',
+                  output_frequency=60)
+        run.add(con)
 
         channel.basic_publish(exchange='',
                               routing_key=queue,
