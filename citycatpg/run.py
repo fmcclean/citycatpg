@@ -12,7 +12,6 @@ import geopandas as gpd
 import os
 import subprocess
 import warnings
-import logging
 
 
 @dataclass
@@ -43,8 +42,6 @@ class Run:
     green_areas_table: str = None
     buildings_table: str = None
 
-    upload_url: Optional[str] = None
-    hostname: Optional[str] = None
     version_number: Optional[str] = None
 
     model: Optional[Model] = None
@@ -73,8 +70,6 @@ class Run:
             friction numeric,
             green_areas_table text,
             buildings_table text,
-            upload_url text,
-            hostname text,
             version_number text
         );
         
@@ -94,8 +89,6 @@ class Run:
             friction,
             green_areas_table,
             buildings_table,
-            upload_url,
-            hostname,
             version_number
         ) 
         VALUES (
@@ -114,8 +107,6 @@ class Run:
             %(friction)s,
             %(green_areas_table)s,
             %(buildings_table)s,
-            %(upload_url)s,
-            %(hostname)s,
             %(version_number)s
         )
         """).format(run_table=sql.Identifier(self.run_table))
@@ -235,8 +226,6 @@ def fetch(con, run_id, run_table='runs'):
         friction,
         green_areas_table,
         buildings_table,
-        upload_url,
-        hostname,
         version_number
     
     FROM {run_table}
@@ -263,8 +252,6 @@ def fetch(con, run_id, run_table='runs'):
                 friction,
                 green_areas_table,
                 buildings_table,
-                upload_url,
-                hostname,
                 version_number
             ) = response
 
@@ -284,7 +271,5 @@ def fetch(con, run_id, run_table='runs'):
         friction=friction,
         green_areas_table=green_areas_table,
         buildings_table=buildings_table,
-        upload_url=upload_url,
-        hostname=hostname,
         version_number=version_number
     )
