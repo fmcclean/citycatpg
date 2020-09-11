@@ -242,6 +242,8 @@ def fetch(con, run_id, run_table='runs'):
     with con:
         with con.cursor() as cur:
             cur.execute(query, dict(run_id=run_id))
+            response = cur.fetchone()
+            assert response is not None, 'Run does not exist in database'
             (
                 run_id,
                 run_duration,
@@ -261,7 +263,7 @@ def fetch(con, run_id, run_table='runs'):
                 upload_url,
                 hostname,
                 version_number
-            ) = cur.fetchone()
+            ) = response
 
     return Run(
         run_id=run_id,
