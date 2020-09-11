@@ -12,6 +12,7 @@ import geopandas as gpd
 import os
 import subprocess
 import warnings
+import logging
 
 
 @dataclass
@@ -201,6 +202,7 @@ class Run:
                 con)
 
     def execute(self, run_path, out_path):
+        print(f'[{datetime.now().replace(microsecond=0)}] {self.run_id}')
 
         self.model.write(run_path)
 
