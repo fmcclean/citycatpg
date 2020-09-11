@@ -212,7 +212,9 @@ class Run:
         shutil.copy(executable, run_path)
         subprocess.call(f'cd {run_path} & citycat.exe -r 1 -c 1', shell=True)
         output.Output(os.path.join(run_path, 'R1C1_SurfaceMaps')).to_netcdf(
-            os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'))
+            os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'), attributes={
+                param: value if type(value) in [float, int] else str(value)
+                for param, value in self.__dict__.items() if param != 'model'}, srid=self.srid)
 
 
 def fetch(con, run_id, run_table='runs'):
