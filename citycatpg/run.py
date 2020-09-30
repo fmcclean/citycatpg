@@ -42,14 +42,11 @@ class Run:
     green_areas_table: str = None
     buildings_table: str = None
 
+    metadata_table: str = 'metadata'
+
     version_number: Optional[str] = None
 
     model: Optional[Model] = None
-
-    @property
-    def rain_geom_table(self):
-        if self.rain_table is not None:
-            return self.rain_table + '_geom'
 
     def add(self, con: connection):
 
@@ -61,6 +58,7 @@ class Run:
             resolution int, 
             run_name text, 
             domain_table text,
+            dem_table text,
             rain_table text,
             rain_start timestamp,
             rain_end timestamp,
@@ -80,6 +78,7 @@ class Run:
             resolution, 
             run_name, 
             domain_table,
+            dem_table,
             rain_table,
             rain_start,
             rain_end,
@@ -98,6 +97,7 @@ class Run:
             %(resolution)s, 
             %(run_name)s, 
             %(domain_table)s,
+            %(dem_table)s,
             %(rain_table)s,
             %(rain_start)s,
             %(rain_end)s,
@@ -117,16 +117,12 @@ class Run:
     def get_model(self, con):
 
         assert self.rain_table is not None or self.rain_total is not None
-
-        rainfall_polygons = self.get_rainfall_polygons(con)
-        if rainfall_polygons is not None:
-            gids = rainfall_polygons.gid.unique().tolist()
-        else:
-            gids = None
+        rainfall, rainfall_polygons = self.get_rainfall(con)
+        rainfall_polygons = rainfall.geom if type(rainfall) == gpd.GeoDataFrame else None
 
         self.model = Model(
             dem=self.get_dem(con),
-            rainfall=self.get_rainfall(con, gids),
+            rainfall=rainfall,
             rainfall_polygons=rainfall_polygons,
             duration=self.run_duration,
             output_interval=self.output_frequency
@@ -146,9 +142,9 @@ class Run:
 
                 return rio.MemoryFile(cursor.fetchone()[0].tobytes())
 
-    def get_rainfall(self, con, gids=None):
+    def get_rainfall(self, con):
 
-        if gids is None:
+        if self.rain_total is not None:
 
             rain = pd.DataFrame({
                 'rainfall': [self.rain_total / self.rain_duration] * 2 + [0]
@@ -157,40 +153,41 @@ class Run:
 
             rain /= 1000  # convert from mm to m
 
+            return rain, None
+
         else:
             assert self.rain_start and self.rain_end
 
-            rain = pd.read_sql_query(sql.SQL("""
-            SELECT gid, value, time
-            FROM {rain_table} WHERE gid = ANY({gids}) 
-            AND time >= {rain_start} AND time <= {rain_end}
+            with con.cursor() as cur:
+                cur.execute(
+                    sql.SQL('select start, frequency from {metadata_table} where dataset = %(dataset)s').format(
+                        metadata_table=sql.Identifier(self.metadata_table)),
+                    dict(dataset=self.rain_table)
+                )
+                start, frequency = cur.fetchone()
+
+            idx_min = ((self.rain_start-start) / frequency) + 1
+            idx_max = ((self.rain_end-start) / frequency) + 1
+
+            rain = gpd.GeoDataFrame.from_postgis(sql.SQL("""
+            SELECT {rain_table}.geom, series[{idx_min}:{idx_max}], frequency
+            FROM {rain_table}, {domain_table}
+            WHERE ST_Intersects({rain_table}.geom, {domain_table}.geom)
             """).format(
+                idx_min=sql.Literal(idx_min),
+                idx_max=sql.Literal(idx_max),
                 rain_table=sql.Identifier(self.rain_table),
-                gids=sql.Literal(gids),
                 rain_start=sql.Literal(self.rain_start),
                 rain_end=sql.Literal(self.rain_end),
-            ), con)
-            rain = rain.pivot(index='time', values='value', columns='gid')
-
+                domain_table=sql.Identifier(self.domain_table)
+            ).as_string(con), con)
+            geom = rain.geom
+            rain = rain.series.explode().transpose()
+            rain.index = pd.date_range(start=self.rain_start, freq=frequency, periods=len(rain))
             rain.index = (rain.index - rain.index[0]).total_seconds().astype(int)
 
-        return rain
+            return rain if type(rain) == pd.DataFrame else rain.to_frame(), geom
 
-    def get_rainfall_polygons(self, con):
-        if self.rain_total:
-            return
-
-        else:
-            return gpd.GeoDataFrame.from_postgis(
-                sql.SQL(
-                    """
-                    SELECT {rain_geom_table}.gid, {rain_geom_table}.geom FROM {rain_geom_table}, {domain_table} 
-                    WHERE ST_Intersects({rain_geom_table}.geom, {domain_table}.geom)
-                    """).format(
-                        rain_geom_table=sql.Identifier(self.rain_geom_table),
-                        domain_table=sql.Identifier(self.domain_table)
-                    ).as_string(con),
-                con)
 
     def execute(self, run_path, out_path):
 
@@ -217,6 +214,7 @@ def fetch(con, run_id, run_table='runs'):
         resolution, 
         run_name, 
         domain_table,
+        dem_table,
         rain_table,
         rain_start,
         rain_end,
@@ -243,6 +241,7 @@ def fetch(con, run_id, run_table='runs'):
                 resolution,
                 run_name,
                 domain_table,
+                dem_table,
                 rain_table,
                 rain_start,
                 rain_end,
@@ -262,6 +261,7 @@ def fetch(con, run_id, run_table='runs'):
         resolution=resolution,
         run_name=run_name,
         domain_table=domain_table,
+        dem_table=dem_table,
         rain_table=rain_table,
         rain_start=rain_start,
         rain_end=rain_end,
