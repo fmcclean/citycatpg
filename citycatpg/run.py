@@ -182,12 +182,11 @@ class Run:
                 domain_table=sql.Identifier(self.domain_table)
             ).as_string(con), con)
             geom = rain.geom
-            rain = rain.series.explode().transpose()
+            rain = rain.series.explode().transpose().astype(float) / frequency.total_seconds() / 1000
             rain.index = pd.date_range(start=self.rain_start, freq=frequency, periods=len(rain))
             rain.index = (rain.index - rain.index[0]).total_seconds().astype(int)
 
             return rain if type(rain) == pd.DataFrame else rain.to_frame(), geom
-
 
     def execute(self, run_path, out_path):
 
