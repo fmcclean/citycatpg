@@ -146,6 +146,7 @@ class Run:
     def get_rainfall(self, con):
 
         if self.rain_total is not None:
+            assert self.rain_duration is not None, 'Rain duration is required if rain total is given'
 
             rain = pd.DataFrame({
                 'rainfall': [self.rain_total / self.rain_duration] * 2 + [0] * 2
@@ -157,7 +158,7 @@ class Run:
             return rain, None
 
         else:
-            assert self.rain_start and self.rain_end
+            assert self.rain_start and self.rain_end, 'Rain start and end times are required if rain total is not given'
 
             with con.cursor() as cur:
                 cur.execute(
@@ -272,8 +273,8 @@ def fetch(con, run_id, run_table='runs'):
         rain_start=rain_start,
         rain_end=rain_end,
         output_frequency=output_frequency,
-        rain_total=float(rain_total),
-        rain_duration=int(rain_duration),
+        rain_total=float(rain_total) if rain_total is not None else None,
+        rain_duration=int(rain_duration) if rain_duration is not None else None,
         friction=float(friction),
         green_areas_table=green_areas_table,
         buildings_table=buildings_table,

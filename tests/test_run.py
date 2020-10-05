@@ -20,10 +20,12 @@ class TestRun(TestCase):
             with con.cursor() as cur:
                 cur.execute('DROP TABLE IF EXISTS runs')
 
-        run = Run(rain_total=100, rain_duration=1800, run_duration=500, srid=3035, resolution=90, domain_id=500)
-        run.add(con)
+        for run in [Run(rain_total=100, rain_duration=1800, run_duration=500, srid=3035, resolution=90, domain_id=500),
+                    Run(rain_table='rain', run_duration=500, srid=3035, resolution=90, domain_id=500,
+                        rain_start=datetime.datetime(2000, 1, 1), rain_end=datetime.datetime(2000, 1, 2))]:
+            run.add(con)
 
-        fetch(con, run_id=run.run_id).get_model(con)
+            fetch(con, run_id=run.run_id).get_model(con)
 
     def test_generate_rainfall(self):
         run = Run(100, 3035, 90, rain_total=100, rain_duration=500, domain_id=500)
