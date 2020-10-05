@@ -39,7 +39,7 @@ with con:
             sql.SQL(""" 
                         DROP TABLE IF EXISTS {domain_table};
                         CREATE TABLE {domain_table} (gid serial PRIMARY KEY, geom geometry);
-                        INSERT INTO {domain_table} (geom) VALUES (ST_GeomFromText(%(geom)s));
+                        INSERT INTO {domain_table} (gid, geom) VALUES (500, ST_GeomFromText(%(geom)s));
 
                         DROP TABLE IF EXISTS {rain_table};
                         CREATE TABLE {rain_table} (gid serial PRIMARY KEY, geom geometry, start timestamp, 
