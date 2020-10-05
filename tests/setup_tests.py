@@ -6,7 +6,7 @@ import psycopg2
 from psycopg2 import sql
 from citycatpg import Run
 
-con = psycopg2.connect(database='postgres', user='postgres', password='password', host='localhost')
+con = psycopg2.connect(database='test', user='postgres', password='password', host='localhost')
 
 dem_file = rio.MemoryFile()
 x_min, y_max, res, height, width = 100, 500, 5, 100, 200
@@ -36,18 +36,22 @@ with con:
         cursor.execute("SET postgis.gdal_enabled_drivers TO 'GTiff'")
 
         cursor.execute(
-            sql.SQL("""
+            sql.SQL(""" 
                         DROP TABLE IF EXISTS {domain_table};
                         CREATE TABLE {domain_table} (gid serial PRIMARY KEY, geom geometry);
                         INSERT INTO {domain_table} (geom) VALUES (ST_GeomFromText(%(geom)s));
 
-                        DROP TABLE IF EXISTS {rain_geom_table};
-                        CREATE TABLE {rain_geom_table} (gid serial PRIMARY KEY, geom geometry);
-                        INSERT INTO {rain_geom_table} (geom) VALUES (ST_GeomFromText(%(geom)s));
-
                         DROP TABLE IF EXISTS {rain_table};
-                        CREATE TABLE {rain_table} (gid integer, time timestamp, value numeric);
-                        INSERT INTO {rain_table} (gid, time, value) VALUES (1, '2000-01-01', 10),(1, '2000-01-02', 20);
+                        CREATE TABLE {rain_table} (gid serial PRIMARY KEY, geom geometry, start timestamp, 
+                        frequency interval, series numeric[]);
+                        INSERT INTO {rain_table} (geom, series) 
+                        VALUES (ST_GeomFromText(%(geom)s), '{{1, 2, 3, 4, 5}}');
+                        
+                        DROP TABLE IF EXISTS {metadata_table};
+                        CREATE TABLE {metadata_table} (id serial PRIMARY KEY, dataset text, source text, 
+                        frequency interval , start timestamp);
+                        INSERT INTO {metadata_table} (dataset, frequency, start) VALUES 
+                            ('rain', '1 day', '2000-01-01');
 
                         DROP TABLE IF EXISTS {dem_table};
                         CREATE TABLE {dem_table} (rast raster);
@@ -55,8 +59,8 @@ with con:
                     """).format(
                 domain_table=sql.Identifier(r.domain_table),
                 dem_table=sql.Identifier(r.dem_table),
-                rain_geom_table=sql.Identifier(r.rain_geom_table),
                 rain_table=sql.Identifier(r.rain_table),
+                metadata_table=sql.Identifier(r.metadata_table),
             ),
             dict(
                 geom=str(Polygon(
