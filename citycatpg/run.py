@@ -118,8 +118,6 @@ class Run:
 
         assert self.rain_table is not None or self.rain_total is not None
         rainfall, rainfall_polygons = self.get_rainfall(con)
-        rainfall_polygons = rainfall.geom if type(rainfall) == gpd.GeoDataFrame else None
-
         self.model = Model(
             dem=self.get_dem(con),
             rainfall=rainfall,
@@ -170,7 +168,7 @@ class Run:
             idx_max = ((self.rain_end-start) / frequency) + 1
 
             rain = gpd.GeoDataFrame.from_postgis(sql.SQL("""
-            SELECT {rain_table}.geom, series[{idx_min}:{idx_max}], frequency
+            SELECT {rain_table}.geom, series[{idx_min}:{idx_max}]
             FROM {rain_table}, {domain_table}
             WHERE ST_Intersects({rain_table}.geom, {domain_table}.geom)
             """).format(
@@ -182,7 +180,10 @@ class Run:
                 domain_table=sql.Identifier(self.domain_table)
             ).as_string(con), con)
             geom = rain.geom
-            rain = rain.series.explode().transpose().astype(float) / frequency.total_seconds() / 1000
+            rain = rain.series.explode()
+            rain = pd.DataFrame({'values': rain.values, 'index': list(range(len(rain[0]))) * len(geom),
+                                'columns': rain.index}).pivot(values='values', index='index', columns='columns')
+            rain = rain.astype(float) / frequency.total_seconds() / 1000
             rain.index = pd.date_range(start=self.rain_start, freq=frequency, periods=len(rain))
             rain.index = (rain.index - rain.index[0]).total_seconds().astype(int)
 
