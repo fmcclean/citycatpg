@@ -117,16 +117,23 @@ class Run:
             with con.cursor() as cur:
                 cur.execute(query, self.__dict__)
 
-    def get_model(self, con):
+    def get_model(self, con, open_boundaries=True):
 
         assert self.rain_table is not None or self.rain_total is not None
         rainfall, rainfall_polygons = self.get_rainfall(con)
+
+        if open_boundaries:
+            open_boundaries = gpd.GeoDataFrame(geometry=self.get_domain(con).buffer(1000))
+        else:
+            open_boundaries = None
+
         self.model = Model(
             dem=self.get_dem(con),
             rainfall=rainfall,
             rainfall_polygons=rainfall_polygons,
             duration=self.run_duration,
-            output_interval=self.output_frequency
+            output_interval=self.output_frequency,
+            open_boundaries=open_boundaries
         )
 
     def get_dem(self, con):
@@ -142,6 +149,15 @@ class Run:
                 ), self.__dict__)
 
                 return rio.MemoryFile(cursor.fetchone()[0].tobytes())
+
+    def get_domain(self, con):
+
+        return gpd.GeoDataFrame.from_postgis(sql.SQL("""
+        SELECT geom FROM {domain_table} WHERE gid={domain_id}
+        """).format(
+            domain_id=sql.Literal(self.domain_id),
+            domain_table=sql.Identifier(self.domain_table)
+        ).as_string(con), con=con)
 
     def get_rainfall(self, con):
 
@@ -205,7 +221,7 @@ class Run:
         subprocess.call(f'cd {run_path} & citycat.exe -r 1 -c 1', shell=True)
         output.Output(os.path.join(run_path, 'R1C1_SurfaceMaps')).to_netcdf(
             path=os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'),
-            start_time=self.rain_start if self.rain_start is None else datetime(1, 1, 1),
+            start_time=self.rain_start if self.rain_start is not None else datetime(1, 1, 1),
             attributes={
                 param: value if type(value) in [float, int] else str(value)
                 for param, value in self.__dict__.items() if param != 'model'}, srid=self.srid)
