@@ -211,6 +211,9 @@ class Run:
 
     def execute(self, run_path, out_path):
 
+        if not os.path.exists(run_path):
+            os.mkdir(run_path)
+        run_path = os.path.join(run_path, f'{self.run_name}-{self.run_id}')
         self.model.write(run_path)
 
         executable = os.getenv('CITYCAT')

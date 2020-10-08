@@ -13,6 +13,7 @@ class TestServer(TestCase):
         connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', port=5672))
         channel = connection.channel()
         channel.queue_declare(queue=queue)
+        channel.queue_purge(queue=queue)
 
         run = Run(run_duration=120, srid=3035, resolution=90, rain_total=100, rain_duration=120, run_name='test',
                   output_frequency=60, domain_id=500)
