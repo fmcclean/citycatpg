@@ -21,5 +21,9 @@ class TestServer(TestCase):
         channel.basic_publish(exchange='',
                               routing_key=queue,
                               body=run.run_id)
+
+        channel.basic_publish(exchange='',
+                              routing_key=queue,
+                              body=run.run_id)
         server.run_server(queue=queue, con=con, run_path=os.path.abspath('tests/test_model_from_queue'),
                           out_path=os.path.abspath('tests/test_model_from_queue'), close=True)
