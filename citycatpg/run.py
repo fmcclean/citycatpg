@@ -182,6 +182,7 @@ class Run:
                         metadata_table=sql.Identifier(self.metadata_table)),
                     dict(dataset=self.rain_table)
                 )
+                assert cur.rowcount == 1, f'Metadata missing for {self.rain_table}'
                 start, frequency = cur.fetchone()
 
             idx_min = ((self.rain_start-start) / frequency) + 1
