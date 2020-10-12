@@ -9,7 +9,7 @@ def run_server(con, run_path, out_path, queue='runs', host='localhost', port=567
 
     def ack_message(ch, delivery_tag):
 
-        message_count = ch.queue_declare(queue=queue).method.message_count
+        message_count = ch.queue_declare(queue=queue, durable=True).method.message_count
 
         ch.basic_ack(delivery_tag)
         if message_count == 0 and close:
@@ -36,7 +36,7 @@ def run_server(con, run_path, out_path, queue='runs', host='localhost', port=567
     connection = pika.BlockingConnection(parameters)
 
     channel = connection.channel()
-    channel.queue_declare(queue=queue)
+    channel.queue_declare(queue=queue, durable=True)
     channel.basic_qos(prefetch_count=1)
 
     threads = []
