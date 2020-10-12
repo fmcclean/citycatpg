@@ -26,5 +26,7 @@ class TestServer(TestCase):
         channel.basic_publish(exchange='',
                               routing_key=queue,
                               body=run.run_id)
+
+        # Note: sending a short heartbeat to prove that heartbeats are still sent
         server.run_server(queue=queue, con=con, run_path=os.path.abspath('tests/test_model_from_queue'),
-                          out_path=os.path.abspath('tests/test_model_from_queue'), close=True)
+                          out_path=os.path.abspath('tests/test_model_from_queue'), close=True, heartbeat=1)
