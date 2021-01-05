@@ -12,10 +12,38 @@ import geopandas as gpd
 import os
 import subprocess
 import warnings
+from typing import Tuple
 
 
 @dataclass
 class Run:
+    """Configuration used to create and run CityCAT models from postgres
+
+    Either (rain_table, rain_start and rain_end) or (rain_total and rain_duration) must be given
+
+    Args:
+        run_duration: Number of seconds to run the model for
+        srid: Spatial reference identifier of the projection
+        resolution: Spatial resolution of the domain in metres
+        run_id: Unique identifier for the run
+        run_table: Postgres table where the run configuration is stored
+        run_name: Name of the run
+        output_frequency: Number of seconds between each output file
+        domain_table: The postgres table containing the domain boundary
+        domain_id: ID of the domain boundary
+        dem_table: Postgres table containing the DEM
+        rain_table: Postgres table containing rainfall data
+        rain_start: Start date and time of the rainfall event
+        rain_end: End date and time of the rainfall event
+        rain_total: Total depth of rainfall during the event in millimetres
+        rain_duration: Duration of rainfall event in seconds
+        friction: Friction of the domain
+        green_areas_table: Postgres table containing green areas polygons
+        buildings_table: Postgres table containing building polygons
+        metadata_table: Postgres table containing metadata
+        version_number: Version of citycatpg used to create the model
+        model: Citycatio Model object
+    """
     run_duration: int
     srid: int
     resolution: int
@@ -49,6 +77,11 @@ class Run:
     model: Optional[Model] = None
 
     def add(self, con: connection):
+        """Insert the configuration into the run_table
+
+        Args:
+            con: Postgres connection
+        """
 
         query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS {run_table} (
@@ -117,7 +150,16 @@ class Run:
             with con.cursor() as cur:
                 cur.execute(query, self.__dict__)
 
-    def get_model(self, con, open_boundaries=True):
+    def get_model(self, con: connection, open_boundaries: bool = True):
+        """Create Model using data from postgres
+
+        Args:
+            con: Postgres connection
+            open_boundaries: Whether to treat domain boundaries as open
+
+        Returns:
+            citycatio.Model: Citycatio Model object
+        """
 
         assert self.rain_table is not None or self.rain_total is not None
         rainfall, rainfall_polygons = self.get_rainfall(con)
@@ -136,7 +178,15 @@ class Run:
             open_boundaries=open_boundaries
         )
 
-    def get_dem(self, con):
+    def get_dem(self, con: connection):
+        """Get DEM data from postgres
+
+        Args:
+            con: Postgres connection
+
+        Returns:
+            rasterio.io.MemoryFile: DEM file
+        """
 
         with con:
             with con.cursor() as cursor:
@@ -150,7 +200,15 @@ class Run:
 
                 return rio.MemoryFile(cursor.fetchone()[0].tobytes())
 
-    def get_domain(self, con):
+    def get_domain(self, con: connection):
+        """Get domain boundary from postgres
+
+        Args:
+            con: Postgres connection
+
+        Returns:
+            geopandas.GeoDataFrame: Domain polygon
+        """
 
         return gpd.GeoDataFrame.from_postgis(sql.SQL("""
         SELECT geom FROM {domain_table} WHERE gid={domain_id}
@@ -159,7 +217,16 @@ class Run:
             domain_table=sql.Identifier(self.domain_table)
         ).as_string(con), con=con)
 
-    def get_rainfall(self, con):
+    def get_rainfall(self, con: connection):
+        """Get rainfall data from postgres
+
+        Args:
+            con: Postgres connection
+
+        Returns:
+            Tuple[pandas.DataFrame, Optional[geopandas.GeoSeries]:
+            Tuple containing rainfall values and optionally geometries
+        """
 
         if self.rain_total is not None:
             assert self.rain_duration is not None, 'Rain duration is required if rain total is given'
@@ -210,8 +277,16 @@ class Run:
 
             return rain if type(rain) == pd.DataFrame else rain.to_frame(), geom
 
-    def execute(self, run_path, out_path):
+    def execute(self, run_path: str, out_path: str):
+        """Execute model using current configuration
 
+        Model attribute must be present
+
+        Args:
+            run_path: Directory in which to create the model directory
+            out_path: Directory in which to create the output netCDF file
+        """
+        assert self.model is not None, 'Please generate a Model object using get_model'
         if not os.path.exists(run_path):
             os.mkdir(run_path)
         run_path = os.path.join(run_path, f'{self.run_name}-{self.run_id}')
@@ -222,7 +297,9 @@ class Run:
             warnings.warn('CITYCAT environment variable missing')
             return
         shutil.copy(executable, run_path)
+        self.run_start = datetime.now()
         subprocess.call(f'cd {run_path} & citycat.exe -r 1 -c 1', shell=True)
+        self.run_end = datetime.now()
         output.Output(os.path.join(run_path, 'R1C1_SurfaceMaps')).to_netcdf(
             path=os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'),
             start_time=self.rain_start if self.rain_start is not None else datetime(1, 1, 1),
@@ -231,7 +308,17 @@ class Run:
                 for param, value in self.__dict__.items() if param != 'model'}, srid=self.srid)
 
 
-def fetch(con, run_id, run_table='runs'):
+def fetch(con: connection, run_id: str, run_table: str = 'runs'):
+    """Get a run configuration from postgres
+
+    Args:
+        con: Postgres connection
+        run_id: Unique identifier for the run
+        run_table: Postgres table where the run configuration is stored
+
+    Returns:
+        Run: Configuration used to create and run CityCAT models from postgres
+    """
     query = sql.SQL("""
     SELECT 
         run_id,
