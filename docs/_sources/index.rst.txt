@@ -10,10 +10,16 @@ Welcome to Citycatpg's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+Citycatpg creates and runs CityCAT models with data and parameters stored in a PostgreSQL database.
+RabbitMQ is used to distribute model runs across multiple servers.
+
+.. image:: network-diagram.png
+
 citycatpg module
 --------------------
 .. automodule:: citycatpg
    :members:
+   :member-order: bysource
 
 
 

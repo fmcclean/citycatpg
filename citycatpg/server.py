@@ -3,9 +3,23 @@ from datetime import datetime
 import functools
 import pika
 import threading
+import psycopg2.extensions
 
 
-def run_server(con, run_path, out_path, queue='runs', host='localhost', port=5672, close=False, **params):
+def run_server(con: psycopg2.extensions.connection, run_path: str, out_path: str, queue: str = 'runs',
+               host: str = 'localhost', port: int = 5672, close: bool = False, **params):
+    """Run a Citycatpg server that listens for messages on the specified queue
+
+    Args:
+        con: Postgres connection
+        run_path: Directory in which to create the model directory
+        out_path: Directory in which to create the output netCDF file
+        queue: Name of AQMP queue
+        host: Hostname of AQMP server
+        port: Port of AQMP server
+        close: Whether to stop listening when the message count reaches zero
+        **params: Pika connection parameters
+    """
 
     def ack_message(ch, delivery_tag):
 

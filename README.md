@@ -7,3 +7,6 @@ Citycatpg is a Python package that runs CityCAT models from a PostgreSQL databas
 
 ## Tests
 `python -m unittests`
+
+## Documentation
+https://fmcclean.github.io/citycatpg/

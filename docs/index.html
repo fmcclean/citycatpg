@@ -34,8 +34,52 @@
 <h1>Welcome to Citycatpg’s documentation!<a class="headerlink" href="#welcome-to-citycatpg-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
+<p>Citycatpg creates and runs CityCAT models with data and parameters stored in a PostgreSQL database.
+RabbitMQ is used to distribute model runs across multiple servers.</p>
+<img alt="network-diagram.png" src="network-diagram.png" />
 <div class="section" id="module-citycatpg">
 <span id="citycatpg-module"></span><h2>citycatpg module<a class="headerlink" href="#module-citycatpg" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="citycatpg.run_server">
+<code class="sig-prename descclassname">citycatpg.</code><code class="sig-name descname">run_server</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">con</span></em>, <em class="sig-param"><span class="n">run_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em>, <em class="sig-param"><span class="n">queue</span><span class="o">=</span><span class="default_value">'runs'</span></em>, <em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">'localhost'</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">5672</span></em>, <em class="sig-param"><span class="n">close</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">params</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.run_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a Citycatpg server that listens for messages on the specified queue</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>con</strong> (<a class="reference external" href="https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.connection" title="(in Psycopg v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">connection</span></code></a>) – Postgres connection</p></li>
+<li><p><strong>run_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to create the model directory</p></li>
+<li><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to create the output netCDF file</p></li>
+<li><p><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of AQMP queue</p></li>
+<li><p><strong>host</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Hostname of AQMP server</p></li>
+<li><p><strong>port</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Port of AQMP server</p></li>
+<li><p><strong>close</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to stop listening when the message count reaches zero</p></li>
+<li><p><strong>**params</strong> – Pika connection parameters</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="citycatpg.fetch">
+<code class="sig-prename descclassname">citycatpg.</code><code class="sig-name descname">fetch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">con</span></em>, <em class="sig-param"><span class="n">run_id</span></em>, <em class="sig-param"><span class="n">run_table</span><span class="o">=</span><span class="default_value">'runs'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.fetch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a run configuration from postgres</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>con</strong> (<a class="reference external" href="https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.connection" title="(in Psycopg v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">connection</span></code></a>) – Postgres connection</p></li>
+<li><p><strong>run_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Unique identifier for the run</p></li>
+<li><p><strong>run_table</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Postgres table where the run configuration is stored</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Configuration used to create and run CityCAT models from postgres</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#citycatpg.Run" title="citycatpg.Run">Run</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt id="citycatpg.Run">
 <em class="property">class </em><code class="sig-prename descclassname">citycatpg.</code><code class="sig-name descname">Run</code><span class="sig-paren">(</span><em class="sig-param">run_duration</em>, <em class="sig-param">srid</em>, <em class="sig-param">resolution</em>, <em class="sig-param">run_id=&lt;factory&gt;</em>, <em class="sig-param">run_table='runs'</em>, <em class="sig-param">run_name=''</em>, <em class="sig-param">run_start=None</em>, <em class="sig-param">run_end=None</em>, <em class="sig-param">output_frequency=600</em>, <em class="sig-param">domain_table='domain'</em>, <em class="sig-param">domain_id=1</em>, <em class="sig-param">dem_table='dem'</em>, <em class="sig-param">rain_table=None</em>, <em class="sig-param">rain_start=None</em>, <em class="sig-param">rain_end=None</em>, <em class="sig-param">rain_total=None</em>, <em class="sig-param">rain_duration=None</em>, <em class="sig-param">friction=0.03</em>, <em class="sig-param">green_areas_table=None</em>, <em class="sig-param">buildings_table=None</em>, <em class="sig-param">metadata_table='metadata'</em>, <em class="sig-param">version_number=None</em>, <em class="sig-param">model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.Run" title="Permalink to this definition">¶</a></dt>
@@ -80,16 +124,21 @@
 </dd></dl>
 
 <dl class="py method">
-<dt id="citycatpg.Run.execute">
-<code class="sig-name descname">execute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.Run.execute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute model using current configuration</p>
-<p>Model attribute must be present</p>
+<dt id="citycatpg.Run.get_model">
+<code class="sig-name descname">get_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">con</span></em>, <em class="sig-param"><span class="n">open_boundaries</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.Run.get_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create Model using data from postgres</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>run_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to create the model directory</p></li>
-<li><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to create the output netCDF file</p></li>
+<li><p><strong>con</strong> (<a class="reference external" href="https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.connection" title="(in Psycopg v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">connection</span></code></a>) – Postgres connection</p></li>
+<li><p><strong>open_boundaries</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to treat domain boundaries as open</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Citycatio Model object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://nclwater.github.io/citycatio/index.html#citycatio.Model" title="(in CityCAT I/O)">citycatio.Model</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -129,26 +178,6 @@
 </dd></dl>
 
 <dl class="py method">
-<dt id="citycatpg.Run.get_model">
-<code class="sig-name descname">get_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">con</span></em>, <em class="sig-param"><span class="n">open_boundaries</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.Run.get_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create Model using data from postgres</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>con</strong> (<a class="reference external" href="https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.connection" title="(in Psycopg v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">connection</span></code></a>) – Postgres connection</p></li>
-<li><p><strong>open_boundaries</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to treat domain boundaries as open</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Citycatio Model object</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://nclwater.github.io/citycatio/index.html#citycatio.Model" title="(in CityCAT I/O)">citycatio.Model</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt id="citycatpg.Run.get_rainfall">
 <code class="sig-name descname">get_rainfall</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">con</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.Run.get_rainfall" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get rainfall data from postgres</p>
@@ -165,27 +194,21 @@
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py function">
-<dt id="citycatpg.fetch">
-<code class="sig-prename descclassname">citycatpg.</code><code class="sig-name descname">fetch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">con</span></em>, <em class="sig-param"><span class="n">run_id</span></em>, <em class="sig-param"><span class="n">run_table</span><span class="o">=</span><span class="default_value">'runs'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.fetch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a run configuration from postgres</p>
+<dl class="py method">
+<dt id="citycatpg.Run.execute">
+<code class="sig-name descname">execute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#citycatpg.Run.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute model using current configuration</p>
+<p>Model attribute must be present</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>con</strong> (<a class="reference external" href="https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.connection" title="(in Psycopg v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">connection</span></code></a>) – Postgres connection</p></li>
-<li><p><strong>run_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Unique identifier for the run</p></li>
-<li><p><strong>run_table</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Postgres table where the run configuration is stored</p></li>
+<li><p><strong>run_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to create the model directory</p></li>
+<li><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to create the output netCDF file</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Configuration used to create and run CityCAT models from postgres</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#citycatpg.Run" title="citycatpg.Run">Run</a></p>
-</dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 </div>
