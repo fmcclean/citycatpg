@@ -42,8 +42,7 @@ with con:
                         INSERT INTO {domain_table} (gid, geom) VALUES (500, ST_GeomFromText(%(geom)s));
 
                         DROP TABLE IF EXISTS {rain_table};
-                        CREATE TABLE {rain_table} (gid serial PRIMARY KEY, geom geometry, start timestamp, 
-                        frequency interval, series numeric[]);
+                        CREATE TABLE {rain_table} (gid serial PRIMARY KEY, geom geometry, series numeric[]);
                         INSERT INTO {rain_table} (geom, series) 
                         VALUES (ST_GeomFromText(%(geom)s), '{{1, 2, 3, 4, 5}}');
                         
