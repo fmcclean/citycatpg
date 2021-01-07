@@ -85,7 +85,7 @@ class Run:
 
         query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS {run_table} (
-            run_id uuid,
+            run_id uuid PRIMARY KEY,
             run_duration int, 
             srid int, 
             resolution int, 

@@ -48,13 +48,13 @@ with con:
                         VALUES (ST_GeomFromText(%(geom)s), '{{1, 2, 3, 4, 5}}');
                         
                         DROP TABLE IF EXISTS {metadata_table};
-                        CREATE TABLE {metadata_table} (id serial PRIMARY KEY, dataset text, source text, 
+                        CREATE TABLE {metadata_table} (dataset text PRIMARY KEY, source text, 
                         frequency interval , start timestamp);
                         INSERT INTO {metadata_table} (dataset, frequency, start) VALUES 
                             ('rain', '1 day', '2000-01-01');
 
                         DROP TABLE IF EXISTS {dem_table};
-                        CREATE TABLE {dem_table} (rast raster);
+                        CREATE TABLE {dem_table} (rid serial PRIMARY KEY, rast raster);
                         INSERT INTO {dem_table}(rast) VALUES (ST_FromGDALRaster(%(rast)s));
                     """).format(
                 domain_table=sql.Identifier(r.domain_table),
