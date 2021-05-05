@@ -12,7 +12,6 @@ import geopandas as gpd
 import os
 import subprocess
 import warnings
-from typing import Tuple
 
 
 @dataclass
@@ -159,10 +158,15 @@ class Run:
         else:
             open_boundaries = None
 
-        if self.buildings_table:
+        if self.buildings_table is not None:
             buildings = self.get_buildings(con)
         else:
             buildings = None
+
+        if self.green_areas_table is not None:
+            green_areas = self.get_green_areas(con)
+        else:
+            green_areas = None
 
         self.model = Model(
             dem=self.get_dem(con),
@@ -171,7 +175,8 @@ class Run:
             duration=self.run_duration,
             output_interval=self.output_frequency,
             open_boundaries=open_boundaries,
-            buildings=buildings
+            buildings=buildings,
+            green_areas=green_areas
         )
 
     def get_dem(self, con: connection):
@@ -293,6 +298,27 @@ class Run:
         """).format(
             domain_id=sql.Literal(self.domain_id),
             buildings_table=sql.Identifier(self.buildings_table),
+            domain_table=sql.Identifier(self.domain_table),
+        ).as_string(con), con=con)
+
+    def get_green_areas(self, con: connection):
+        """Get green areas from postgres
+
+        Args:
+            con: Postgres connection
+
+        Returns:
+            geopandas.GeoDataFrame: Buildings polygons
+        """
+
+        return gpd.GeoDataFrame.from_postgis(sql.SQL("""
+        SELECT {green_areas_table}.geom 
+        FROM {green_areas_table}, {domain_table} 
+        WHERE ST_Intersects({green_areas_table}.geom, {domain_table}.geom) 
+        AND {domain_table}.gid={domain_id}
+        """).format(
+            domain_id=sql.Literal(self.domain_id),
+            green_areas_table=sql.Identifier(self.green_areas_table),
             domain_table=sql.Identifier(self.domain_table),
         ).as_string(con), con=con)
 

@@ -11,7 +11,7 @@ class TestRun(TestCase):
             with con.cursor() as cur:
                 cur.execute('DROP TABLE IF EXISTS runs')
         run = Run(run_duration=120, rain_total=100, rain_duration=120, run_name='test',
-                  output_frequency=60, domain_id=500, buildings_table='buildings')
+                  output_frequency=60, domain_id=500, buildings_table='buildings', green_areas_table='green_areas')
         run.add(con)
         return run
 
@@ -35,7 +35,7 @@ class TestRun(TestCase):
     def test_get_model(self):
         run = Run(100, rain_table='rain',
                   rain_start=datetime.datetime(2000, 1, 1), rain_end=datetime.datetime(2000, 1, 2), domain_id=500,
-                  buildings_table='buildings')
+                  buildings_table='buildings', green_areas_table='green_areas')
 
         run.get_model(con)
         run.model.write('tests/test_model')
