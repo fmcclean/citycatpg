@@ -23,8 +23,6 @@ class Run:
 
     Args:
         run_duration: Number of seconds to run the model for
-        srid: Spatial reference identifier of the projection
-        resolution: Spatial resolution of the domain in metres
         run_id: Unique identifier for the run
         run_table: Postgres table where the run configuration is stored
         run_name: Name of the run
@@ -45,8 +43,6 @@ class Run:
         model: Citycatio Model object
     """
     run_duration: int
-    srid: int
-    resolution: int
 
     run_id: Optional[str] = field(default_factory=lambda: str(uuid.uuid4()))
     run_table: str = 'runs'
@@ -87,8 +83,6 @@ class Run:
         CREATE TABLE IF NOT EXISTS {run_table} (
             run_id uuid PRIMARY KEY,
             run_duration int, 
-            srid int, 
-            resolution int, 
             run_name text, 
             domain_table text,
             domain_id int,
@@ -108,8 +102,6 @@ class Run:
         INSERT INTO {run_table} (
             run_id,
             run_duration, 
-            srid, 
-            resolution, 
             run_name, 
             domain_table,
             domain_id,
@@ -128,8 +120,6 @@ class Run:
         VALUES (
             %(run_id)s,
             %(run_duration)s, 
-            %(srid)s, 
-            %(resolution)s, 
             %(run_name)s, 
             %(domain_table)s,
             %(domain_id)s,
@@ -305,7 +295,8 @@ class Run:
             start_time=self.rain_start if self.rain_start is not None else datetime(1, 1, 1),
             attributes={
                 param: value if type(value) in [float, int] else str(value)
-                for param, value in self.__dict__.items() if param != 'model'}, srid=self.srid)
+                for param, value in self.__dict__.items() if param != 'model'},
+            srid=self.model.dem.data.open().crs.to_epsg())
 
 
 def fetch(con: connection, run_id: str, run_table: str = 'runs'):
@@ -323,8 +314,6 @@ def fetch(con: connection, run_id: str, run_table: str = 'runs'):
     SELECT 
         run_id,
         run_duration, 
-        srid, 
-        resolution, 
         run_name, 
         domain_table,
         domain_id,
@@ -351,8 +340,6 @@ def fetch(con: connection, run_id: str, run_table: str = 'runs'):
             (
                 run_id,
                 run_duration,
-                srid,
-                resolution,
                 run_name,
                 domain_table,
                 domain_id,
@@ -372,8 +359,6 @@ def fetch(con: connection, run_id: str, run_table: str = 'runs'):
     return Run(
         run_id=run_id,
         run_duration=run_duration,
-        srid=srid,
-        resolution=resolution,
         run_name=run_name,
         domain_table=domain_table,
         domain_id=domain_id,

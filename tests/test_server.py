@@ -15,7 +15,7 @@ class TestServer(TestCase):
         channel.queue_delete(queue=queue)
         channel.queue_declare(queue=queue, durable=True)
 
-        run = Run(run_duration=120, srid=3035, resolution=90, rain_total=100, rain_duration=120, run_name='test',
+        run = Run(run_duration=120, rain_total=100, rain_duration=120, run_name='test',
                   output_frequency=60, domain_id=500)
         run.add(con)
 

@@ -22,7 +22,8 @@ with rio.open(
         count=1,
         dtype=array.dtype,
         transform=Affine.translation(x_min, y_max) * Affine.scale(res, -res),
-        nodata=-9999
+        nodata=-9999,
+        crs='EPSG:27700'
 ) as dst:
     dst.write(array, 1)
 
@@ -39,12 +40,12 @@ with con:
             sql.SQL(""" 
                         DROP TABLE IF EXISTS {domain_table};
                         CREATE TABLE {domain_table} (gid serial PRIMARY KEY, geom geometry);
-                        INSERT INTO {domain_table} (gid, geom) VALUES (500, ST_GeomFromText(%(geom)s));
+                        INSERT INTO {domain_table} (gid, geom) VALUES (500, ST_GeomFromText(%(geom)s, 27700));
 
                         DROP TABLE IF EXISTS {rain_table};
                         CREATE TABLE {rain_table} (gid serial PRIMARY KEY, geom geometry, series numeric[]);
                         INSERT INTO {rain_table} (geom, series) 
-                        VALUES (ST_GeomFromText(%(geom)s), '{{1, 2, 3, 4, 5}}');
+                        VALUES (ST_GeomFromText(%(geom)s, 27700), '{{1, 2, 3, 4, 5}}');
                         
                         DROP TABLE IF EXISTS {metadata_table};
                         CREATE TABLE {metadata_table} (dataset text PRIMARY KEY, source text, 
