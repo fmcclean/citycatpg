@@ -29,7 +29,7 @@ with rio.open(
 
 dem_file.seek(0)
 
-r = Run(100, 3035, 90, rain_table='rain')
+r = Run(100, rain_table='rain', buildings_table='buildings')
 
 with con:
     with con.cursor() as cursor:
@@ -56,13 +56,20 @@ with con:
                         DROP TABLE IF EXISTS {dem_table};
                         CREATE TABLE {dem_table} (rid serial PRIMARY KEY, rast raster);
                         INSERT INTO {dem_table}(rast) VALUES (ST_FromGDALRaster(%(rast)s));
+                        
+                        DROP TABLE IF EXISTS {buildings_table};
+                        CREATE TABLE {buildings_table} (gid serial PRIMARY KEY, geom geometry);
+                        INSERT INTO {buildings_table} (gid, geom) VALUES (500, ST_GeomFromText(%(buildings)s, 27700));
                     """).format(
                 domain_table=sql.Identifier(r.domain_table),
                 dem_table=sql.Identifier(r.dem_table),
                 rain_table=sql.Identifier(r.rain_table),
                 metadata_table=sql.Identifier(r.metadata_table),
+                buildings_table=sql.Identifier(r.buildings_table)
             ),
             dict(
                 geom=str(Polygon(
                     [[x_min, y_min], [x_min, y_max], [x_max / 2, y_max / 2], [x_max, y_min], [x_min, y_min]])),
+                buildings=str(Polygon(
+                    [[x_min, y_min], [x_min, y_max], [x_max / 2, y_max / 2], [x_max, y_min], [x_min, y_min]]).buffer(-70)),
                 rast=psycopg2.Binary(dem_file.read())))

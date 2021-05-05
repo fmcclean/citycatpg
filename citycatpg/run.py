@@ -159,13 +159,19 @@ class Run:
         else:
             open_boundaries = None
 
+        if self.buildings_table:
+            buildings = self.get_buildings(con)
+        else:
+            buildings = None
+
         self.model = Model(
             dem=self.get_dem(con),
             rainfall=rainfall,
             rainfall_polygons=rainfall_polygons,
             duration=self.run_duration,
             output_interval=self.output_frequency,
-            open_boundaries=open_boundaries
+            open_boundaries=open_boundaries,
+            buildings=buildings
         )
 
     def get_dem(self, con: connection):
@@ -268,6 +274,27 @@ class Run:
             rain.index = (rain.index - rain.index[0]).total_seconds().astype(int)
 
             return rain if type(rain) == pd.DataFrame else rain.to_frame(), geom
+
+    def get_buildings(self, con: connection):
+        """Get buildings from postgres
+
+        Args:
+            con: Postgres connection
+
+        Returns:
+            geopandas.GeoDataFrame: Buildings polygons
+        """
+
+        return gpd.GeoDataFrame.from_postgis(sql.SQL("""
+        SELECT {buildings_table}.geom 
+        FROM {buildings_table}, {domain_table} 
+        WHERE ST_Intersects({buildings_table}.geom, {domain_table}.geom) 
+        AND {domain_table}.gid={domain_id}
+        """).format(
+            domain_id=sql.Literal(self.domain_id),
+            buildings_table=sql.Identifier(self.buildings_table),
+            domain_table=sql.Identifier(self.domain_table),
+        ).as_string(con), con=con)
 
     def execute(self, run_path: str, out_path: str):
         """Execute model using current configuration
