@@ -249,13 +249,15 @@ class Run:
             SELECT {rain_table}.geom, series[{idx_min}:{idx_max}]
             FROM {rain_table}, {domain_table}
             WHERE ST_Intersects({rain_table}.geom, {domain_table}.geom)
+            AND {domain_table}.gid={domain_id}
             """).format(
                 idx_min=sql.Literal(idx_min),
                 idx_max=sql.Literal(idx_max),
                 rain_table=sql.Identifier(self.rain_table),
                 rain_start=sql.Literal(self.rain_start),
                 rain_end=sql.Literal(self.rain_end),
-                domain_table=sql.Identifier(self.domain_table)
+                domain_table=sql.Identifier(self.domain_table),
+                domain_id=sql.Literal(self.domain_id)
             ).as_string(con), con)
             geom = rain.geom
             rain = rain.series.explode()
