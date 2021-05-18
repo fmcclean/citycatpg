@@ -5,7 +5,8 @@ from datetime import datetime
 from psycopg2.extensions import connection
 import uuid
 from psycopg2 import sql
-from citycatio import Model, output
+from citycatio import Model
+from citycatio.output import to_netcdf, to_geotiff
 import pandas as pd
 import rasterio as rio
 import geopandas as gpd
@@ -329,7 +330,7 @@ class Run:
 
         Args:
             run_path: Directory in which to create the model directory
-            out_path: Directory in which to create the output netCDF file
+            out_path: Directory in which to create the output netCDF and GeoTIFF files
         """
         assert self.model is not None, 'Please generate a Model object using get_model'
         if not os.path.exists(run_path):
@@ -345,13 +346,18 @@ class Run:
         self.run_start = datetime.now()
         subprocess.call(f'cd {run_path} & citycat.exe -r 1 -c 1', shell=True)
         self.run_end = datetime.now()
-        output.Output(os.path.join(run_path, 'R1C1_SurfaceMaps')).to_netcdf(
-            path=os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'),
+
+        to_netcdf(
+            in_path=os.path.join(run_path, 'R1C1_SurfaceMaps'),
+            out_path=os.path.join(out_path, f'{self.run_name}-{self.run_id}.nc'),
             start_time=self.rain_start if self.rain_start is not None else datetime(1, 1, 1),
             attributes={
                 param: value if type(value) in [float, int] else str(value)
                 for param, value in self.__dict__.items() if param != 'model'},
             srid=self.model.dem.data.open().crs.to_epsg())
+
+        to_geotiff(os.path.join(run_path, 'R1C1_SurfaceMaps', 'R1_C1_max_depth.csv'),
+                   out_path=os.path.join(out_path, f'{self.run_name}-{self.run_id}.tif'))
 
 
 def fetch(con: connection, run_id: str, run_table: str = 'runs'):

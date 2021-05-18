@@ -13,4 +13,4 @@ dependencies:
   - pika=1.1.0
   - pip
   - pip:
-      - citycatio==0.3.4
+      - citycatio==0.7.2
